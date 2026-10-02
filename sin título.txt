@@ -5,15 +5,15 @@ function MenuModule:Cargar()
 	local LocalPlayer = Players.LocalPlayer
 	local UserInputService = game:GetService("UserInputService")
 	
-	-- Obtener el contenedor seguro para executores (CoreGui / gethui)
+	-- Contenedor seguro para executores
 	local parentGui = (gethui and gethui()) or game:GetService("CoreGui")
 	
-	-- Eliminar versión previa si ya existe
+	-- Eliminar versión previa si existe
 	if parentGui:FindFirstChild("DeltaMenuV2") then
 		parentGui.DeltaMenuV2:Destroy()
 	end
 
-	-- 1. Ventana Principal (ScreenGui)
+	-- 1. ScreenGui Principal
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "DeltaMenuV2"
 	ScreenGui.ResetOnSpawn = false
@@ -26,6 +26,7 @@ function MenuModule:Cargar()
 	MainFrame.Position = UDim2.new(0.5, -280, 0.5, -175)
 	MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 	MainFrame.BorderSizePixel = 0
+	MainFrame.ClipsDescendants = true
 	MainFrame.Parent = ScreenGui
 
 	local MainCorner = Instance.new("UICorner")
@@ -39,10 +40,6 @@ function MenuModule:Cargar()
 	TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
 	TopBar.BorderSizePixel = 0
 	TopBar.Parent = MainFrame
-
-	local TopCorner = Instance.new("UICorner")
-	TopCorner.CornerRadius = UDim.new(0, 10)
-	TopCorner.Parent = TopBar
 
 	local Title = Instance.new("TextLabel")
 	Title.Size = UDim2.new(0.5, 0, 1, 0)
@@ -110,14 +107,18 @@ function MenuModule:Cargar()
 	AvatarCorner.CornerRadius = UDim.new(1, 0)
 	AvatarCorner.Parent = Avatar
 
-	-- Cargar foto del jugador
+	-- Cargar foto del jugador de forma segura
 	task.spawn(function()
-		local content, isReady = Players:GetUserThumbnailAsync(
-			LocalPlayer.UserId, 
-			Enum.ThumbnailType.HeadShot, 
-			Enum.ThumbnailSize.Size150x150
-		)
-		if isReady then Avatar.Image = content end
+		local success, content = pcall(function()
+			return Players:GetUserThumbnailAsync(
+				LocalPlayer.UserId, 
+				Enum.ThumbnailType.HeadShot, 
+				Enum.ThumbnailSize.Size150x150
+			)
+		end)
+		if success and content then 
+			Avatar.Image = content 
+		end
 	end)
 
 	local Username = Instance.new("TextLabel")
@@ -143,7 +144,7 @@ function MenuModule:Cargar()
 	DateLabel.TextXAlignment = Enum.TextXAlignment.Left
 	DateLabel.Parent = Profile
 
-	-- Contenedor de Categorías e Iconos
+	-- Contenedor de Categorías
 	local CategoriesContainer = Instance.new("Frame")
 	CategoriesContainer.Name = "CategoriesContainer"
 	CategoriesContainer.Size = UDim2.new(1, 0, 1, -75)
@@ -157,7 +158,7 @@ function MenuModule:Cargar()
 	UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	UIListLayout.Parent = CategoriesContainer
 
-	-- 4. Tablero Principal de Contenido (Vacío)
+	-- 4. Tablero Principal de Contenido
 	local ContentPanel = Instance.new("Frame")
 	ContentPanel.Name = "ContentPanel"
 	ContentPanel.Size = UDim2.new(1, -170, 1, -38)
@@ -166,7 +167,7 @@ function MenuModule:Cargar()
 	ContentPanel.BorderSizePixel = 0
 	ContentPanel.Parent = MainFrame
 
-	-- 5. Lógica de Funciones (Cerrar, Minimizar y Arrastrar)
+	-- 5. Lógica de Funciones
 	local isMinimized = false
 	CloseBtn.MouseButton1Click:Connect(function()
 		ScreenGui:Destroy()
@@ -177,17 +178,32 @@ function MenuModule:Cargar()
 		Sidebar.Visible = not isMinimized
 		ContentPanel.Visible = not isMinimized
 		MainFrame.Size = isMinimized and UDim2.new(0, 560, 0, 38) or UDim2.new(0, 560, 0, 350)
+		MinimizeBtn.Text = isMinimized and "+" or "-"
 	end)
 
-	-- Sistema de Arrastre (Soporta Mouse y Pantalla Táctil)
+	-- Sistema de Arrastre Robusto (Mouse + Touch)
 	local dragging, dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(
+			startPos.X.Scale, 
+			startPos.X.Offset + delta.X, 
+			startPos.Y.Scale, 
+			startPos.Y.Offset + delta.Y
+		)
+	end
+
 	TopBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
 			startPos = MainFrame.Position
+
 			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
 			end)
 		end
 	end)
@@ -200,8 +216,7 @@ function MenuModule:Cargar()
 
 	UserInputService.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
-			local delta = input.Position - dragStart
-			MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			update(input)
 		end
 	end)
 
