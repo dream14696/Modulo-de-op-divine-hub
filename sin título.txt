@@ -1,0 +1,211 @@
+local MenuModule = {}
+
+function MenuModule:Cargar()
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local UserInputService = game:GetService("UserInputService")
+	
+	-- Obtener el contenedor seguro para executores (CoreGui / gethui)
+	local parentGui = (gethui and gethui()) or game:GetService("CoreGui")
+	
+	-- Eliminar versión previa si ya existe
+	if parentGui:FindFirstChild("DeltaMenuV2") then
+		parentGui.DeltaMenuV2:Destroy()
+	end
+
+	-- 1. Ventana Principal (ScreenGui)
+	local ScreenGui = Instance.new("ScreenGui")
+	ScreenGui.Name = "DeltaMenuV2"
+	ScreenGui.ResetOnSpawn = false
+	ScreenGui.Parent = parentGui
+
+	-- Frame Principal
+	local MainFrame = Instance.new("Frame")
+	MainFrame.Name = "MainFrame"
+	MainFrame.Size = UDim2.new(0, 560, 0, 350)
+	MainFrame.Position = UDim2.new(0.5, -280, 0.5, -175)
+	MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+	MainFrame.BorderSizePixel = 0
+	MainFrame.Parent = ScreenGui
+
+	local MainCorner = Instance.new("UICorner")
+	MainCorner.CornerRadius = UDim.new(0, 10)
+	MainCorner.Parent = MainFrame
+
+	-- 2. Barra Superior (TopBar)
+	local TopBar = Instance.new("Frame")
+	TopBar.Name = "TopBar"
+	TopBar.Size = UDim2.new(1, 0, 0, 38)
+	TopBar.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+	TopBar.BorderSizePixel = 0
+	TopBar.Parent = MainFrame
+
+	local TopCorner = Instance.new("UICorner")
+	TopCorner.CornerRadius = UDim.new(0, 10)
+	TopCorner.Parent = TopBar
+
+	local Title = Instance.new("TextLabel")
+	Title.Size = UDim2.new(0.5, 0, 1, 0)
+	Title.Position = UDim2.new(0, 15, 0, 0)
+	Title.BackgroundTransparency = 1
+	Title.Text = "Menú Base v2"
+	Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.Font = Enum.Font.GothamBold
+	Title.TextSize = 14
+	Title.Parent = TopBar
+
+	-- Botón Cerrar
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+	CloseBtn.Position = UDim2.new(1, -34, 0, 5)
+	CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+	CloseBtn.Text = "X"
+	CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	CloseBtn.Font = Enum.Font.GothamBold
+	CloseBtn.TextSize = 13
+	CloseBtn.Parent = TopBar
+
+	local CloseCorner = Instance.new("UICorner")
+	CloseCorner.CornerRadius = UDim.new(0, 6)
+	CloseCorner.Parent = CloseBtn
+
+	-- Botón Minimizar
+	local MinimizeBtn = Instance.new("TextButton")
+	MinimizeBtn.Size = UDim2.new(0, 28, 0, 28)
+	MinimizeBtn.Position = UDim2.new(1, -68, 0, 5)
+	MinimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+	MinimizeBtn.Text = "-"
+	MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	MinimizeBtn.Font = Enum.Font.GothamBold
+	MinimizeBtn.TextSize = 16
+	MinimizeBtn.Parent = TopBar
+
+	local MiniCorner = Instance.new("UICorner")
+	MiniCorner.CornerRadius = UDim.new(0, 6)
+	MiniCorner.Parent = MinimizeBtn
+
+	-- 3. Panel Izquierdo (Sidebar)
+	local Sidebar = Instance.new("Frame")
+	Sidebar.Name = "Sidebar"
+	Sidebar.Size = UDim2.new(0, 170, 1, -38)
+	Sidebar.Position = UDim2.new(0, 0, 0, 38)
+	Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+	Sidebar.BorderSizePixel = 0
+	Sidebar.Parent = MainFrame
+
+	-- Sección Perfil
+	local Profile = Instance.new("Frame")
+	Profile.Size = UDim2.new(1, 0, 0, 75)
+	Profile.BackgroundTransparency = 1
+	Profile.Parent = Sidebar
+
+	local Avatar = Instance.new("ImageLabel")
+	Avatar.Size = UDim2.new(0, 42, 0, 42)
+	Avatar.Position = UDim2.new(0, 12, 0, 16)
+	Avatar.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+	Avatar.Parent = Profile
+
+	local AvatarCorner = Instance.new("UICorner")
+	AvatarCorner.CornerRadius = UDim.new(1, 0)
+	AvatarCorner.Parent = Avatar
+
+	-- Cargar foto del jugador
+	task.spawn(function()
+		local content, isReady = Players:GetUserThumbnailAsync(
+			LocalPlayer.UserId, 
+			Enum.ThumbnailType.HeadShot, 
+			Enum.ThumbnailSize.Size150x150
+		)
+		if isReady then Avatar.Image = content end
+	end)
+
+	local Username = Instance.new("TextLabel")
+	Username.Size = UDim2.new(1, -65, 0, 18)
+	Username.Position = UDim2.new(0, 60, 0, 18)
+	Username.BackgroundTransparency = 1
+	Username.Text = LocalPlayer.DisplayName
+	Username.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Username.Font = Enum.Font.GothamBold
+	Username.TextSize = 13
+	Username.TextXAlignment = Enum.TextXAlignment.Left
+	Username.TextTruncate = Enum.TextTruncate.AtEnd
+	Username.Parent = Profile
+
+	local DateLabel = Instance.new("TextLabel")
+	DateLabel.Size = UDim2.new(1, -65, 0, 16)
+	DateLabel.Position = UDim2.new(0, 60, 0, 38)
+	DateLabel.BackgroundTransparency = 1
+	DateLabel.Text = os.date("%d/%m/%Y")
+	DateLabel.TextColor3 = Color3.fromRGB(140, 140, 150)
+	DateLabel.Font = Enum.Font.Gotham
+	DateLabel.TextSize = 11
+	DateLabel.TextXAlignment = Enum.TextXAlignment.Left
+	DateLabel.Parent = Profile
+
+	-- Contenedor de Categorías e Iconos
+	local CategoriesContainer = Instance.new("Frame")
+	CategoriesContainer.Name = "CategoriesContainer"
+	CategoriesContainer.Size = UDim2.new(1, 0, 1, -75)
+	CategoriesContainer.Position = UDim2.new(0, 0, 0, 75)
+	CategoriesContainer.BackgroundTransparency = 1
+	CategoriesContainer.Parent = Sidebar
+
+	local UIListLayout = Instance.new("UIListLayout")
+	UIListLayout.Padding = UDim.new(0, 6)
+	UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	UIListLayout.Parent = CategoriesContainer
+
+	-- 4. Tablero Principal de Contenido (Vacío)
+	local ContentPanel = Instance.new("Frame")
+	ContentPanel.Name = "ContentPanel"
+	ContentPanel.Size = UDim2.new(1, -170, 1, -38)
+	ContentPanel.Position = UDim2.new(0, 170, 0, 38)
+	ContentPanel.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+	ContentPanel.BorderSizePixel = 0
+	ContentPanel.Parent = MainFrame
+
+	-- 5. Lógica de Funciones (Cerrar, Minimizar y Arrastrar)
+	local isMinimized = false
+	CloseBtn.MouseButton1Click:Connect(function()
+		ScreenGui:Destroy()
+	end)
+
+	MinimizeBtn.MouseButton1Click:Connect(function()
+		isMinimized = not isMinimized
+		Sidebar.Visible = not isMinimized
+		ContentPanel.Visible = not isMinimized
+		MainFrame.Size = isMinimized and UDim2.new(0, 560, 0, 38) or UDim2.new(0, 560, 0, 350)
+	end)
+
+	-- Sistema de Arrastre (Soporta Mouse y Pantalla Táctil)
+	local dragging, dragInput, dragStart, startPos
+	TopBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = MainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+
+	TopBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+
+	return ScreenGui
+end
+
+return MenuModule
